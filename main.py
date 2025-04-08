@@ -1,7 +1,11 @@
-
 import discord
 from discord.ext import commands, tasks
+from discord.ui import Button, View, Select
+import asyncio
+import random
 import datetime
+from collections import defaultdict, Counter
+import os
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Dictionnaire des queues par salon
