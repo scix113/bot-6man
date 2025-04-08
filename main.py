@@ -6,7 +6,9 @@ import random
 import datetime
 from collections import defaultdict, Counter
 import os
+intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
+bot.remove_command('help')
 
 # Dictionnaire des queues par salon
 queues = {}  # {channel_id: {user_id: timestamp}}
