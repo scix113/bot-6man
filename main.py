@@ -2,6 +2,7 @@
 import discord
 from discord.ext import commands, tasks
 import datetime
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Dictionnaire des queues par salon
 queues = {}  # {channel_id: {user_id: timestamp}}
