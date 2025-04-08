@@ -5,6 +5,8 @@ import asyncio
 import random
 import datetime
 from collections import defaultdict, Counter
+import os
+from keep_alive import keep_alive
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
