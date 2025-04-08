@@ -5,11 +5,13 @@ import asyncio
 import random
 import datetime
 from collections import defaultdict, Counter
-import os
 from keep_alive import keep_alive
+
+keep_alive()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
+bot.remove_command('help')
 
 QUEUE_TIMEOUT = 3600  # 1h
 queue = {}  # {user_id: timestamp}
@@ -183,6 +185,7 @@ async def join(ctx):
         vote_embed = await ctx.send(embed=discord.Embed(title="✅ 6 joueurs réunis !", description="Début du vote.", color=discord.Color.green()), view=view)
         view.vote_message = vote_embed
 
+
 @bot.command()
 async def leave(ctx):
     if ctx.author.id not in queue:
@@ -209,7 +212,7 @@ async def loose(ctx, match_id: int):
 @bot.command()
 async def cancel(ctx, match_id: int):
     cancelled_matches.add(match_id)
-    await ctx.send(f"❌ Le match `{match_id}` a été annulé.")
+    await ctx.send(f"❌ Le match {match_id} a été annulé.")
 
 async def report_result(ctx, match_id: int, winner=None, loser=None):
     match = matches.get(match_id)
@@ -255,6 +258,38 @@ async def report_result(ctx, match_id: int, winner=None, loser=None):
 
     match["reported"] = True
     await ctx.send(embed=embed)
+@bot.command()
+async def undo(ctx, match_id: int):
+    match = match_history.get(match_id)
+    if not match:
+        await ctx.send("❌ Aucun match trouvé avec cet ID.")
+        return
+
+    # Vérifie si le score a déjà été annulé
+    if match.get("undone"):
+        await ctx.send("⚠️ Ce match a déjà été annulé.")
+        return
+
+    winner = match["winner"]
+    loser = 2 if winner == 1 else 1
+    mmr_change = match["mmr_change"]
+
+    for player_id in match[f"team{winner}"]:
+        player_stats[player_id]["mmr"] -= mmr_change
+        player_stats[player_id]["wins"] -= 1
+
+    for player_id in match[f"team{loser}"]:
+        player_stats[player_id]["mmr"] += mmr_change
+        player_stats[player_id]["losses"] -= 1
+
+    match["undone"] = True  # Marquer comme annulé
+
+    embed = discord.Embed(
+        title="↩️ Match annulé",
+        description=f"Les modifications de MMR pour le match ID {match_id} ont été annulées.",
+        color=discord.Color.red()
+    )
+    await ctx.send(embed=embed)
 
 @bot.command()
 async def leaderboard(ctx):
@@ -278,11 +313,37 @@ async def leadersboard(ctx):
     embed = discord.Embed(title="🤝 Leaderboard duo", description=desc or "Aucun duo classé.", color=discord.Color.teal())
     await ctx.send(embed=embed)
 
+
+@bot.command(name="commands")
+async def show_commands(ctx):
+    embed = discord.Embed(title="📘 Commandes disponibles", color=discord.Color.blue())
+    embed.add_field(name="🎮 !join", value="Rejoindre la queue.", inline=False)
+    embed.add_field(name="🏃 !leave", value="Quitter la queue.", inline=False)
+    embed.add_field(name="⏳ !status", value="Voir les joueurs actuellement en queue.", inline=False)
+    embed.add_field(name="🏆 !win <ID>", value="Déclarer la victoire de ton équipe.", inline=False)
+    embed.add_field(name="🔻 !loose <ID>", value="Déclarer la défaite de ton équipe.", inline=False)
+    embed.add_field(name="↩️ !undo <ID>", value="Annuler un match déjà reporté (rembourse MMR).", inline=False)
+    embed.add_field(name="⛔ !cancel <ID>", value="Annuler un match (admin uniquement).", inline=False)
+    embed.add_field(name="📊 !leaderboard", value="Afficher le classement solo.", inline=False)
+    embed.add_field(name="👥 !leadersboard", value="Afficher les meilleurs duos.", inline=False)
+    await ctx.send(embed=embed)
+
+
+@bot.command()
+async def status(ctx):
+    if not queue:
+        await ctx.send("💤 La queue est vide.")
+        return
+
+    embed = discord.Embed(title="⏳ Joueurs dans la queue", color=discord.Color.blurple())
+    embed.description = "\n".join([f"<@{uid}>" for uid in queue.keys()])
+    await ctx.send(embed=embed)
+
 @bot.event
 async def on_ready():
     print(f"✅ Bot connecté en tant que {bot.user}")
     clean_timeout.start()
 
 
+import os
 bot.run(os.getenv("TOKEN"))
-
