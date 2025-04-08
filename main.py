@@ -282,4 +282,5 @@ async def on_ready():
     clean_timeout.start()
 
 
-bot.run("TOKEN")
+bot.run(os.getenv("TOKEN"))
+
