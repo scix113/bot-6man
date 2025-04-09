@@ -105,7 +105,6 @@ class VoteView(View):
             await self.disable_buttons()
             await self.channel.send(embed=discord.Embed(title="🎲 Mode Aléatoire sélectionné !", color=discord.Color.green()))
             await start_random_mode(self.players, self.channel)
-
 async def start_captain_mode(players, channel):
     guild = channel.guild
     ids = players.copy()
