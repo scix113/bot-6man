@@ -344,5 +344,6 @@ async def on_ready():
     clean_timeout.start()
 
 
-import os
-bot.run(os.getenv("TOKEN"))
+if __name__ == "__main__":
+    import os
+    bot.run(os.getenv("TOKEN"))
