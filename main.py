@@ -1,3 +1,4 @@
+
 import discord
 from discord.ext import commands, tasks
 from discord.ui import Button, View, Select
@@ -176,14 +177,17 @@ async def join(ctx):
     embed = discord.Embed(title="✅ Nouveau joueur", color=discord.Color.green())
     embed.description = f"{ctx.author.mention} a rejoint la queue ({len(players)}/6)"
     embed.add_field(name="Joueurs", value="\n".join([f"<@{p}>" for p in players]), inline=False)
-    await ctx.send(embed=embed)
+
+    # Envoyer dans le même salon uniquement
+    await ctx.channel.send(embed=embed)
 
     if len(players) == 6:
-        await ctx.send("✅ 6 joueurs sont réunis : " + ", ".join([f"<@{p}>" for p in players]))
         view = VoteView(players, ctx.channel)
-        vote_embed = await ctx.send(embed=discord.Embed(title="✅ 6 joueurs réunis !", description="Début du vote.", color=discord.Color.green()), view=view)
+        vote_embed = await ctx.channel.send(
+            embed=discord.Embed(title="✅ 6 joueurs réunis !", description="Début du vote.", color=discord.Color.green()),
+            view=view
+        )
         view.vote_message = vote_embed
-
 
 @bot.command()
 async def leave(ctx):
@@ -191,7 +195,7 @@ async def leave(ctx):
         await ctx.send("❌ Tu n'es pas dans la queue.")
         return
     del queue[ctx.author.id]
-    await ctx.send(f"↩️ {ctx.author.mention} a quitté la queue. ({len(queue)}/6)")
+    await ctx.channel.send(f"↩️ {ctx.author.mention} a quitté la queue. ({len(queue)}/6)")
 
 @tasks.loop(minutes=10)
 async def clean_timeout():
