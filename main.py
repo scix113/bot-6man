@@ -199,6 +199,12 @@ async def clean_timeout():
     to_remove = [uid for uid, ts in queue.items() if (now - ts).total_seconds() > QUEUE_TIMEOUT]
     for uid in to_remove:
         del queue[uid]
+        for guild in bot.guilds:
+            member = guild.get_member(uid)
+            if member:
+                for channel in guild.text_channels:
+                    if channel.permissions_for(guild.me).send_messages:
+                        await channel.send(f"⏳ {get_display_name(guild, uid)} a été retiré de la queue pour inactivité.")
 
 @bot.command()
 async def win(ctx, match_id: int):
