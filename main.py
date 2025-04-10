@@ -198,17 +198,22 @@ async def leave(ctx):
     await ctx.channel.send(f"↩️ {ctx.author.mention} a quitté la queue. ({len(queue)}/6)")
 
 @tasks.loop(minutes=10)
+@tasks.loop(minutes=10)
 async def clean_timeout():
     now = datetime.datetime.utcnow()
     to_remove = [uid for uid, ts in queue.items() if (now - ts).total_seconds() > QUEUE_TIMEOUT]
+
     for uid in to_remove:
         del queue[uid]
         for guild in bot.guilds:
             member = guild.get_member(uid)
             if member:
                 for channel in guild.text_channels:
+                    # Envoie le message uniquement dans le premier salon où le bot peut parler
                     if channel.permissions_for(guild.me).send_messages:
                         await channel.send(f"⏳ {get_display_name(guild, uid)} a été retiré de la queue pour inactivité.")
+                        break  # on envoie le message qu'une seule fois par joueur
+
 
 @bot.command()
 async def win(ctx, match_id: int):
