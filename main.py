@@ -197,7 +197,7 @@ async def leave(ctx):
     del queue[ctx.author.id]
     await ctx.channel.send(f"↩️ {ctx.author.mention} a quitté la queue. ({len(queue)}/6)")
 
-@tasks.loop(minutes=10)
+
 @tasks.loop(minutes=10)
 async def clean_timeout():
     now = datetime.datetime.utcnow()
