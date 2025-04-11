@@ -171,7 +171,7 @@ async def join(ctx):
     if ctx.author.id in queue:
         await ctx.send("❌ Tu es déjà dans la queue.")
         return
-    queue[ctx.author.id] = datetime.datetime.utcnow()
+    queue[ctx.author.id] = {"timestamp": datetime.datetime.utcnow(), "channel": ctx.channel}
     players = list(queue.keys())
 
     embed = discord.Embed(title="✅ Nouveau joueur", color=discord.Color.green())
@@ -201,18 +201,17 @@ async def leave(ctx):
 @tasks.loop(minutes=10)
 async def clean_timeout():
     now = datetime.datetime.utcnow()
-    to_remove = [uid for uid, ts in queue.items() if (now - ts).total_seconds() > QUEUE_TIMEOUT]
+    to_remove = []
+
+    for uid, data in queue.items():
+        if (now - data["timestamp"]).total_seconds() > QUEUE_TIMEOUT:
+            to_remove.append(uid)
+            channel = data["channel"]
+            await channel.send(f"⏳ {get_display_name(channel.guild, uid)} a été retiré de la queue pour inactivité.")
 
     for uid in to_remove:
         del queue[uid]
-        for guild in bot.guilds:
-            member = guild.get_member(uid)
-            if member:
-                for channel in guild.text_channels:
-                    # Envoie le message uniquement dans le premier salon où le bot peut parler
-                    if channel.permissions_for(guild.me).send_messages:
-                        await channel.send(f"⏳ {get_display_name(guild, uid)} a été retiré de la queue pour inactivité.")
-                        break  # on envoie le message qu'une seule fois par joueur
+
 
 
 @bot.command()
