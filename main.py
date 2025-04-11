@@ -203,7 +203,7 @@ async def clean_timeout():
     now = datetime.datetime.utcnow()
     to_remove = []
 
-    for uid, data in queue.items():
+    for uid, data in queue.copy().items():
         if (now - data["timestamp"]).total_seconds() > QUEUE_TIMEOUT:
             to_remove.append(uid)
             channel = data["channel"]
@@ -211,7 +211,6 @@ async def clean_timeout():
 
     for uid in to_remove:
         del queue[uid]
-
 
 
 @bot.command()
@@ -355,7 +354,9 @@ async def status(ctx):
 @bot.event
 async def on_ready():
     print(f"✅ Bot connecté en tant que {bot.user}")
-    clean_timeout.start()
+    if not clean_timeout.is_running():
+        clean_timeout.start()
+
 
 
 if __name__ == "__main__":
