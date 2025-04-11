@@ -207,7 +207,7 @@ async def clean_timeout():
         if (now - data["timestamp"]).total_seconds() > QUEUE_TIMEOUT:
             to_remove.append(uid)
             channel = data["channel"]
-            await channel.send(f"⏳ {get_display_name(channel.guild, uid)} a été retiré de la queue pour inactivité.")
+            await channel.send(f"⏳ <@{uid}> a été retiré de la queue pour inactivité.")
 
     for uid in to_remove:
         del queue[uid]
