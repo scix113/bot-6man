@@ -188,6 +188,7 @@ async def join(ctx):
             view=view
         )
         view.vote_message = vote_embed
+        queue.clear()
 
 @bot.command()
 async def leave(ctx):
